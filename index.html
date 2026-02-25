@@ -274,6 +274,7 @@
         <button class="sort-btn" onclick="setSort('alpha-asc')" id="sort-alpha-asc">A → Z</button>
         <button class="sort-btn" onclick="setSort('alpha-desc')" id="sort-alpha-desc">Z → A</button>
         <button class="sort-btn" onclick="setSort('rating')" id="sort-rating">Top rated</button>
+        <button class="sort-btn" onclick="setSort('assigned')" id="sort-assigned">Assigned by</button>
       </div>
       <div class="books-grid" id="books-grid"></div>
     </div>
@@ -377,6 +378,19 @@
           <input class="form-input" id="new-genre-input" placeholder="e.g. Horror" onkeydown="if(event.key==='Enter')addPreferredGenre()">
           <button class="btn btn-primary btn-sm" onclick="addPreferredGenre()">Add</button>
         </div>
+      </div>
+
+      <!-- Tidy genres -->
+      <div class="settings-section">
+        <div class="settings-section-title">Tidy Existing Genres</div>
+        <div class="settings-section-desc">
+          Re-run your Preferred Genres list against all books that already have a genre — normalising them to your canonical labels. E.g. a book tagged "Horror Fiction, Gothic Horror" becomes "Horror". Shows a preview of changes before saving.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+          <button class="btn btn-ghost btn-sm" id="tidy-preview-btn" onclick="tidyPreview()">🔍 Preview Changes</button>
+          <button class="btn btn-primary btn-sm" id="tidy-save-btn" onclick="tidySave()" style="display:none;">💾 Save All Changes</button>
+        </div>
+        <div class="backfill-log" id="tidy-log"></div>
       </div>
 
       <!-- Backfill -->
@@ -662,7 +676,37 @@ function normaliseGenres(subjects) {
 }
 
 // ── API fetches ──────────────────────────────────────────────
+// Calls Netlify function (Hardcover) first; falls back to Open Library + Google Books
 async function fetchBookData(title, author) {
+  // Try Hardcover via Netlify proxy first
+  try {
+    const r = await fetch('/.netlify/functions/hardcover-genre', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title, author })
+    });
+    if (r.ok) {
+      const { genres, coverUrl: hcCover } = await r.json();
+      if (genres?.length) {
+        const genre = normaliseGenres(genres) || genres.slice(0,2).map(toTitleCase).join(', ');
+        // Still fetch cover from Google Books if Hardcover didn't return one
+        let coverUrl = hcCover || null;
+        if (!coverUrl) {
+          const q = encodeURIComponent(`${title}${author?' '+author:''}`);
+          const gbRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1&fields=items(volumeInfo/imageLinks)`).catch(()=>null);
+          if (gbRes?.ok) {
+            const d = await gbRes.json();
+            const links = d.items?.[0]?.volumeInfo?.imageLinks;
+            const raw = links&&(links.extraLarge||links.large||links.medium||links.small||links.thumbnail);
+            if (raw) coverUrl = raw.replace('http://','https://').replace('&edge=curl','');
+          }
+        }
+        return { coverUrl, genre };
+      }
+    }
+  } catch { /* Netlify function not set up yet — fall through to Open Library */ }
+
+  // Fallback: Open Library + Google Books in parallel
   try {
     const q = encodeURIComponent(`${title}${author?' '+author:''}`);
     const [gbRes, olRes] = await Promise.all([
@@ -740,6 +784,10 @@ function sortedBooks() {
     case 'alpha-asc':  return books.sort((a,b)=>a.title.localeCompare(b.title));
     case 'alpha-desc': return books.sort((a,b)=>b.title.localeCompare(a.title));
     case 'rating':     return books.sort((a,b)=>avgStars(ratingsFor(b.id))-avgStars(ratingsFor(a.id)));
+    case 'assigned': {
+      const name = b => b.assignedById ? (getMember(b.assignedById)?.name||'zzz') : 'zzz';
+      return books.sort((a,b)=>name(a).localeCompare(name(b)));
+    }
     default:           return books;
   }
 }
@@ -1000,6 +1048,61 @@ window.removePreferredGenre = i => {
   settings.preferredGenres.splice(i,1);
   saveSettings(settings);
   renderPreferredGenres();
+};
+
+// ── Tidy existing genres ────────────────────────────────────
+let _tidyChanges = []; // { id, title, oldGenre, newGenre }
+
+window.tidyPreview = () => {
+  _tidyChanges = [];
+  const log = document.getElementById('tidy-log');
+  log.innerHTML = ''; log.style.display = 'block';
+
+  const booksWithGenre = state.books.filter(b => b.genre);
+  if (!booksWithGenre.length) {
+    log.innerHTML = '<div class="log-skip">No books with genres to tidy.</div>';
+    return;
+  }
+
+  let changed = 0;
+  for (const b of booksWithGenre) {
+    const tags = parseGenres(b.genre);
+    // Re-run normalisation on each tag as if it were an API subject
+    const normalisedTags = [];
+    for (const tag of tags) {
+      const matched = normaliseGenres([tag]);
+      normalisedTags.push(matched || tag);
+    }
+    // Deduplicate
+    const deduped = [...new Set(normalisedTags)];
+    const newGenre = deduped.join(', ');
+    if (newGenre !== b.genre) {
+      _tidyChanges.push({ id: b.id, title: b.title, oldGenre: b.genre, newGenre });
+      log.innerHTML += `<div class="log-ok">✎ <strong>${b.title}</strong><br>&nbsp;&nbsp;<span style="color:var(--muted)">${b.genre}</span> → ${newGenre}</div>`;
+      changed++;
+    }
+  }
+
+  if (!changed) {
+    log.innerHTML = '<div class="log-ok">✓ All existing genres already match your preferred labels — nothing to tidy.</div>';
+    document.getElementById('tidy-save-btn').style.display = 'none';
+  } else {
+    log.innerHTML += `<div class="log-info" style="margin-top:8px;">${changed} book${changed!==1?'s':''} will be updated.</div>`;
+    document.getElementById('tidy-save-btn').style.display = 'inline-flex';
+  }
+};
+
+window.tidySave = async () => {
+  if (!_tidyChanges.length) return;
+  const btn = document.getElementById('tidy-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  for (const c of _tidyChanges) {
+    await updateDoc(doc(db,'books',c.id), { genre: c.newGenre });
+  }
+  toast(`${_tidyChanges.length} genres tidied!`);
+  document.getElementById('tidy-log').innerHTML += '<div class="log-ok">🎉 All saved!</div>';
+  btn.style.display = 'none';
+  _tidyChanges = [];
 };
 
 // ── Backfill ──────────────────────────────────────────────────
