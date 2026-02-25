@@ -485,6 +485,7 @@ const getBook    = id => state.books.find(b => b.id === id);
 const ratingsFor = bookId => state.ratings.filter(r => r.bookId === bookId);
 const avgStars   = rs => rs.length ? rs.reduce((a,b) => a+b.stars, 0) / rs.length : 0;
 const starsDisp  = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5-Math.round(n));
+const parseGenres = g => g ? g.split(',').map(s=>s.trim()).filter(Boolean) : [];
 const fmtDate    = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
 const statusLabel = s => s==='reading'
   ? '<span class="book-status-badge badge-reading">Reading</span>'
@@ -597,7 +598,7 @@ function renderBooks() {
     const coverHtml = book.coverUrl
       ? `<img src="${book.coverUrl}" alt="" style="width:60px;height:90px;object-fit:cover;border-radius:4px;flex-shrink:0;box-shadow:2px 3px 10px rgba(0,0,0,0.15);" onerror="this.style.display='none'">`
       : `<div style="width:60px;height:90px;background:var(--paper);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid var(--line);">📖</div>`;
-    const genreHtml = book.genre ? `<div style="margin-bottom:8px;"><span class="genre-tag">${book.genre}</span></div>` : '';
+    const bookGenres = parseGenres(book.genre); const genreHtml = bookGenres.length ? '<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px;">' + bookGenres.map(g=>'<span class="genre-tag">'+g+'</span>').join('') + '</div>' : '';
     return `<div class="book-card ${book.status==='reading'?'active-book':''}">
       <div style="display:flex;gap:12px;margin-bottom:12px;">
         ${coverHtml}
@@ -648,7 +649,7 @@ function renderStats() {
   const reading  = state.books.filter(b=>b.status==='reading').length;
   const overallAvg = allRatings.length ? (allRatings.reduce((a,b)=>a+b.stars,0)/allRatings.length).toFixed(1) : '—';
   const uniqueAuthors = new Set(state.books.map(b=>b.author).filter(Boolean)).size;
-  const uniqueGenres  = new Set(state.books.map(b=>b.genre).filter(Boolean)).size;
+  const uniqueGenres  = new Set(state.books.flatMap(b=>parseGenres(b.genre))).size;
 
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card"><div class="stat-value">${state.books.length}</div><div class="stat-label">Total Books</div></div>
@@ -707,19 +708,20 @@ function renderStats() {
 
   // Genres
   const genreMap = {};
-  state.books.filter(b=>b.genre).forEach(b => {
-    const g = b.genre.trim();
-    if (!genreMap[g]) genreMap[g] = { books: 0, stars: [] };
-    genreMap[g].books++;
-    ratingsFor(b.id).forEach(r => genreMap[g].stars.push(r.stars));
+  state.books.forEach(b => {
+    parseGenres(b.genre).forEach(g => {
+      if (!genreMap[g]) genreMap[g] = { books: 0, stars: [] };
+      genreMap[g].books++;
+      ratingsFor(b.id).forEach(r => genreMap[g].stars.push(r.stars));
+    });
   });
-  const genres = Object.entries(genreMap).sort((a,b) => b[1].books - a[1].books);
-  document.getElementById('genres-body').innerHTML = genres.length
-    ? genres.map(([g, d]) => {
-        const avg = d.stars.length ? (d.stars.reduce((a,b)=>a+b,0)/d.stars.length).toFixed(1) : '—';
-        return `<tr><td><span class="genre-tag">${g}</span></td><td>${d.books}</td><td>${avg!=='—'?`<span style="color:#e6a817">★</span> ${avg}`:avg}</td></tr>`;
+  const genreList = Object.entries(genreMap).sort((a,b) => b[1].books - a[1].books);
+  document.getElementById('genres-body').innerHTML = genreList.length
+    ? genreList.map(([g, d]) => {
+        const avg = d.stars.length ? (d.stars.reduce((s,v)=>s+v,0)/d.stars.length).toFixed(1) : '—';
+        return '<tr><td><span class="genre-tag">' + g + '</span></td><td>' + d.books + '</td><td>' + (avg !== '—' ? '<span style="color:#e6a817">★</span> ' + avg : avg) + '</td></tr>';
       }).join('')
-    : '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">No genres added yet — edit books to add genres</td></tr>';
+    : '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">No genres yet — edit books or run the Bulk Fill tool</td></tr>';
 
   // Authors — top 5 + show more
   const authorMap = {};
