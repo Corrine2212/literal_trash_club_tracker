@@ -194,6 +194,32 @@
   input[type=number].form-input { -moz-appearance: textfield; }
   input[type=number].form-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
+  /* ── Search & filter bar ── */
+  .search-filter-wrap { margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .search-row { display: flex; gap: 8px; align-items: center; }
+  .search-input-wrap { position: relative; flex: 1; max-width: 360px; }
+  .search-input-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search-input { width: 100%; padding: 8px 10px 8px 34px; border: 1px solid var(--line); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--card-bg); color: var(--ink); outline: none; transition: border-color 0.15s; }
+  .search-input:focus { border-color: var(--ink); }
+  .search-input::placeholder { color: var(--muted); }
+  .filter-toggle-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 6px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .filter-toggle-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .filter-toggle-btn.has-filters { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .filter-panel { background: var(--card-bg); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: none; }
+  .filter-panel.open { display: block; }
+  .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .filter-group label.filter-group-label { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+  .filter-select { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--paper); color: var(--ink); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+  .filter-select:focus { border-color: var(--ink); }
+  .filter-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .clear-filters-btn { background: none; border: none; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; padding: 0; font-family: 'DM Sans', sans-serif; }
+  .clear-filters-btn:hover { color: var(--ink); }
+  .results-count { font-size: 12px; color: var(--muted); padding: 4px 0; }
+  @media (max-width: 680px) {
+    .search-input-wrap { max-width: 100%; }
+    .filter-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  }
+
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── Tablet ── */
@@ -267,14 +293,69 @@
           <button class="btn btn-primary" onclick="openModal('add-book')">+ Add Book</button>
         </div>
       </div>
-      <div class="sort-bar">
-        <span class="sort-label">Sort:</span>
-        <button class="sort-btn active" onclick="setSort('date-desc')" id="sort-date-desc">Newest first</button>
-        <button class="sort-btn" onclick="setSort('date-asc')" id="sort-date-asc">Oldest first</button>
-        <button class="sort-btn" onclick="setSort('alpha-asc')" id="sort-alpha-asc">A → Z</button>
-        <button class="sort-btn" onclick="setSort('alpha-desc')" id="sort-alpha-desc">Z → A</button>
-        <button class="sort-btn" onclick="setSort('rating')" id="sort-rating">Top rated</button>
-        <button class="sort-btn" onclick="setSort('assigned')" id="sort-assigned">Assigned by</button>
+      <!-- Search + Sort row -->
+      <div class="search-filter-wrap">
+        <div class="search-row">
+          <div class="search-input-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-input" id="books-search" placeholder="Search title, author, genre…" oninput="onSearch(this.value)">
+          </div>
+          <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="toggleFilterPanel()">⚙ Filters <span id="filter-active-badge"></span></button>
+        </div>
+
+        <!-- Filter panel -->
+        <div class="filter-panel" id="filter-panel">
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label class="filter-group-label">Status</label>
+              <select class="filter-select" id="filter-status" onchange="applyFilters()">
+                <option value="">All statuses</option>
+                <option value="reading">Currently Reading</option>
+                <option value="finished">Finished</option>
+                <option value="upcoming">Upcoming</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="filter-group-label">Genre</label>
+              <select class="filter-select" id="filter-genre" onchange="applyFilters()">
+                <option value="">All genres</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="filter-group-label">Author</label>
+              <select class="filter-select" id="filter-author" onchange="applyFilters()">
+                <option value="">All authors</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="filter-group-label">Assigned by</label>
+              <select class="filter-select" id="filter-assigned" onchange="applyFilters()">
+                <option value="">Anyone</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="filter-group-label">Year read</label>
+              <select class="filter-select" id="filter-year" onchange="applyFilters()">
+                <option value="">All years</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="clear-filters-btn" onclick="clearFilters()">Clear all filters</button>
+          </div>
+        </div>
+
+        <!-- Sort row -->
+        <div class="sort-bar" style="margin-bottom:0;">
+          <span class="sort-label">Sort:</span>
+          <button class="sort-btn active" onclick="setSort('date-desc')" id="sort-date-desc">Newest first</button>
+          <button class="sort-btn" onclick="setSort('date-asc')" id="sort-date-asc">Oldest first</button>
+          <button class="sort-btn" onclick="setSort('alpha-asc')" id="sort-alpha-asc">A → Z</button>
+          <button class="sort-btn" onclick="setSort('alpha-desc')" id="sort-alpha-desc">Z → A</button>
+          <button class="sort-btn" onclick="setSort('rating')" id="sort-rating">Top rated</button>
+          <button class="sort-btn" onclick="setSort('assigned')" id="sort-assigned">Assigned by</button>
+        </div>
+        <div class="results-count" id="results-count"></div>
       </div>
       <div class="books-grid" id="books-grid"></div>
     </div>
@@ -620,6 +701,14 @@ const state = {
   currentEditBookId: null, currentEditMemberId: null,
   currentEditRatingId: null, currentEditStar: 0,
   ratingsShowAll: false, authorsShowAll: false, genresShowAll: false,
+  // Filter state
+  filterSearch: '',
+  filterStatus: '',
+  filterGenre: '',
+  filterAuthor: '',
+  filterAssigned: '',
+  filterYear: '',
+  filterPanelOpen: false,
 };
 
 const AVATAR_COLORS = ['#5c6bc0','#26a69a','#ef5350','#ab47bc','#42a5f5','#ff7043','#66bb6a','#8d6e63'];
@@ -775,32 +864,143 @@ window.setSort = sort => {
   document.getElementById('sort-'+sort).classList.add('active');
   renderBooks();
 };
-function sortedBooks() {
-  const books = [...state.books];
+
+function sortedBooks(books) {
+  const list = [...books];
   const dv = b => b.start||b.end||'0000-00-00';
   switch (state.currentSort) {
-    case 'date-asc':   return books.sort((a,b)=>dv(a).localeCompare(dv(b)));
-    case 'date-desc':  return books.sort((a,b)=>dv(b).localeCompare(dv(a)));
-    case 'alpha-asc':  return books.sort((a,b)=>a.title.localeCompare(b.title));
-    case 'alpha-desc': return books.sort((a,b)=>b.title.localeCompare(a.title));
-    case 'rating':     return books.sort((a,b)=>avgStars(ratingsFor(b.id))-avgStars(ratingsFor(a.id)));
+    case 'date-asc':   return list.sort((a,b)=>dv(a).localeCompare(dv(b)));
+    case 'date-desc':  return list.sort((a,b)=>dv(b).localeCompare(dv(a)));
+    case 'alpha-asc':  return list.sort((a,b)=>a.title.localeCompare(b.title));
+    case 'alpha-desc': return list.sort((a,b)=>b.title.localeCompare(a.title));
+    case 'rating':     return list.sort((a,b)=>avgStars(ratingsFor(b.id))-avgStars(ratingsFor(a.id)));
     case 'assigned': {
       const name = b => b.assignedById ? (getMember(b.assignedById)?.name||'zzz') : 'zzz';
-      return books.sort((a,b)=>name(a).localeCompare(name(b)));
+      return list.sort((a,b)=>name(a).localeCompare(name(b)));
     }
-    default:           return books;
+    default: return list;
   }
+}
+
+// ── Search & filter ───────────────────────────────────────────
+window.onSearch = val => { state.filterSearch = val.trim().toLowerCase(); renderBooks(); };
+
+window.toggleFilterPanel = () => {
+  state.filterPanelOpen = !state.filterPanelOpen;
+  document.getElementById('filter-panel').classList.toggle('open', state.filterPanelOpen);
+};
+
+window.applyFilters = () => {
+  state.filterStatus   = document.getElementById('filter-status').value;
+  state.filterGenre    = document.getElementById('filter-genre').value;
+  state.filterAuthor   = document.getElementById('filter-author').value;
+  state.filterAssigned = document.getElementById('filter-assigned').value;
+  state.filterYear     = document.getElementById('filter-year').value;
+  renderBooks();
+};
+
+window.clearFilters = () => {
+  ['filter-status','filter-genre','filter-author','filter-assigned','filter-year']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('books-search').value = '';
+  state.filterSearch=''; state.filterStatus=''; state.filterGenre='';
+  state.filterAuthor=''; state.filterAssigned=''; state.filterYear='';
+  renderBooks();
+};
+
+function populateFilterDropdowns() {
+  // Genres
+  const allGenres = [...new Set(state.books.flatMap(b => parseGenres(b.genre)))].sort();
+  const gSel = document.getElementById('filter-genre');
+  const gPrev = gSel.value;
+  gSel.innerHTML = '<option value="">All genres</option>' +
+    allGenres.map(g => `<option value="${g}"${g===gPrev?' selected':''}>${g}</option>`).join('');
+
+  // Authors
+  const allAuthors = [...new Set(state.books.map(b=>b.author).filter(Boolean))].sort();
+  const aSel = document.getElementById('filter-author');
+  const aPrev = aSel.value;
+  aSel.innerHTML = '<option value="">All authors</option>' +
+    allAuthors.map(a => `<option value="${a}"${a===aPrev?' selected':''}>${a}</option>`).join('');
+
+  // Assigned by
+  const mSel = document.getElementById('filter-assigned');
+  const mPrev = mSel.value;
+  mSel.innerHTML = '<option value="">Anyone</option>' +
+    state.members.map(m => `<option value="${m.id}"${m.id===mPrev?' selected':''}>${m.name}</option>`).join('');
+
+  // Year read (from book end dates)
+  const years = [...new Set(state.books
+    .filter(b=>b.end)
+    .map(b=>new Date(b.end+'T00:00:00').getFullYear())
+    .filter(y=>!isNaN(y))
+  )].sort((a,b)=>b-a);
+  const ySel = document.getElementById('filter-year');
+  const yPrev = ySel.value;
+  ySel.innerHTML = '<option value="">All years</option>' +
+    years.map(y => `<option value="${y}"${String(y)===yPrev?' selected':''}>${y}</option>`).join('');
+}
+
+function filteredBooks() {
+  let books = state.books;
+
+  // Search — title, author, genre
+  if (state.filterSearch) {
+    const q = state.filterSearch;
+    books = books.filter(b =>
+      b.title.toLowerCase().includes(q) ||
+      (b.author||'').toLowerCase().includes(q) ||
+      (b.genre||'').toLowerCase().includes(q)
+    );
+  }
+  if (state.filterStatus)   books = books.filter(b => b.status === state.filterStatus);
+  if (state.filterGenre)    books = books.filter(b => parseGenres(b.genre).includes(state.filterGenre));
+  if (state.filterAuthor)   books = books.filter(b => b.author === state.filterAuthor);
+  if (state.filterAssigned) books = books.filter(b => b.assignedById === state.filterAssigned);
+  if (state.filterYear)     books = books.filter(b => {
+    if (!b.end) return false;
+    return String(new Date(b.end+'T00:00:00').getFullYear()) === state.filterYear;
+  });
+  return books;
+}
+
+function activeFilterCount() {
+  return [state.filterStatus, state.filterGenre, state.filterAuthor, state.filterAssigned, state.filterYear, state.filterSearch]
+    .filter(Boolean).length;
 }
 
 // ── Render Books ──────────────────────────────────────────────
 function renderBooks() {
+  populateFilterDropdowns();
+
+  const n = activeFilterCount();
+  const btn = document.getElementById('filter-toggle-btn');
+  const badge = document.getElementById('filter-active-badge');
+  if (n > 0) {
+    btn.classList.add('has-filters');
+    badge.textContent = ` (${n})`;
+  } else {
+    btn.classList.remove('has-filters');
+    badge.textContent = '';
+  }
+
+  const visible = filteredBooks();
   document.getElementById('book-count').textContent = state.books.length;
+  const countEl = document.getElementById('results-count');
+  countEl.textContent = (n > 0 || state.filterSearch)
+    ? `Showing ${visible.length} of ${state.books.length} book${state.books.length!==1?'s':''}`
+    : '';
+
   const grid = document.getElementById('books-grid');
   if (!state.books.length) {
     grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📖</div><div style="font-size:14px;color:var(--muted)">No books yet. Add the first one!</div></div>';
     return;
   }
-  grid.innerHTML = sortedBooks().map(book => {
+  if (!visible.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div style="font-size:14px;color:var(--muted)">No books match your filters.</div><button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="clearFilters()">Clear filters</button></div>';
+    return;
+  }
+  grid.innerHTML = sortedBooks(visible).map(book => {
     const bRatings = ratingsFor(book.id);
     const avg = avgStars(bRatings);
     const assignee = book.assignedById ? getMember(book.assignedById) : null;
