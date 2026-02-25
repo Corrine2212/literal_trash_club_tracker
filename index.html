@@ -499,6 +499,14 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ── Title Case helper ────────────────────────────────────────
+function toTitleCase(s) {
+  const LOWER = new Set(['a','an','the','and','but','or','for','nor','on','at','to','by','in','of','up','as','is']);
+  return s.toLowerCase().split(' ')
+    .map((w, i) => i === 0 || !LOWER.has(w) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+    .join(' ');
+}
+
 // ── Google Books API — fetch cover + genre in one call ────────
 async function fetchBookData(title, author) {
   try {
@@ -511,11 +519,12 @@ async function fetchBookData(title, author) {
     const links = info.imageLinks;
     const rawImg = links && (links.extraLarge||links.large||links.medium||links.small||links.thumbnail);
     const coverUrl = rawImg ? rawImg.replace('http://','https://').replace('&edge=curl','') : null;
-    // Genre — Google returns e.g. ["Fiction / Literary"] — take last segment
+    // Genre — Google returns e.g. ["Fiction / Literary"] — take last segment, apply Title Case
     let genre = null;
     if (info.categories?.length) {
       const parts = info.categories[0].split('/').map(s=>s.trim()).filter(Boolean);
-      genre = parts[parts.length-1] || parts[0];
+      const raw = parts[parts.length-1] || parts[0];
+      if (raw) genre = toTitleCase(raw);
     }
     return { coverUrl, genre };
   } catch { return {}; }
