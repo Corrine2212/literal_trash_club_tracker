@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Literary Trash Club</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -199,7 +199,7 @@
   .search-row { display: flex; gap: 8px; align-items: center; }
   .search-input-wrap { position: relative; flex: 1; max-width: 360px; }
   .search-input-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-  .search-input { width: 100%; padding: 8px 10px 8px 34px; border: 1px solid var(--line); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--card-bg); color: var(--ink); outline: none; transition: border-color 0.15s; }
+  .search-input { width: 100%; padding: 8px 10px 8px 34px; border: 1px solid var(--line); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 16px; background: var(--card-bg); color: var(--ink); outline: none; transition: border-color 0.15s; }
   .search-input:focus { border-color: var(--ink); }
   .search-input::placeholder { color: var(--muted); }
   .filter-toggle-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 6px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
@@ -209,7 +209,7 @@
   .filter-panel.open { display: block; }
   .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
   .filter-group label.filter-group-label { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
-  .filter-select { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--paper); color: var(--ink); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+  .filter-select { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 16px; background: var(--paper); color: var(--ink); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
   .filter-select:focus { border-color: var(--ink); }
   .filter-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
   .clear-filters-btn { background: none; border: none; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; padding: 0; font-family: 'DM Sans', sans-serif; }
@@ -228,6 +228,13 @@
     .books-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
   }
   /* ── Mobile ── */
+  /* ── iOS zoom prevention: all inputs must be >= 16px on mobile ── */
+  @media (max-width: 680px) {
+    input, select, textarea,
+    .form-input, .form-select, .search-input, .filter-select,
+    .genre-add-row .form-input { font-size: 16px !important; }
+  }
+
   @media (max-width: 680px) {
     .sidebar { display: none; }
     .bottom-nav { display: flex; }
