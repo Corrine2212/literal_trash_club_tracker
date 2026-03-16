@@ -151,21 +151,14 @@
   .cover-preview { width: 60px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); display: block; }
 
   /* ── Stars (half-star support) ── */
-  .star-input { display: flex; gap: 2px; }
-  .star-input .star-wrap { position: relative; width: 32px; height: 36px; cursor: pointer; flex-shrink: 0; }
-  .star-input .star-wrap .star-base,
-  .star-input .star-wrap .star-full,
-  .star-input .star-wrap .star-half { position: absolute; top: 0; left: 0; font-size: 30px; line-height: 36px; pointer-events: none; }
-  .star-input .star-wrap .star-base  { color: var(--line); }
-  .star-input .star-wrap .star-full  { color: #e6a817; opacity: 0; clip-path: inset(0 0 0 0); }
-  .star-input .star-wrap .star-half  { color: #e6a817; opacity: 0; clip-path: inset(0 50% 0 0); }
-  .star-input .star-wrap .star-full.lit  { opacity: 1; }
-  .star-input .star-wrap .star-half.lit  { opacity: 1; }
-  /* Click zones: two invisible halves stacked */
-  .star-input .star-wrap .half-left,
-  .star-input .star-wrap .half-right { position: absolute; top: 0; height: 100%; width: 50%; }
-  .star-input .star-wrap .half-left  { left: 0; }
-  .star-input .star-wrap .half-right { right: 0; }
+  .star-input { display: flex; gap: 4px; user-select: none; }
+  .star-input .star-wrap { position: relative; font-size: 32px; cursor: pointer; line-height: 1; width: 28px; }
+  /* The unicode star characters — empty, half, full */
+  .star-input .star-wrap::before { content: '☆'; color: var(--line); display: block; }
+  .star-input .star-wrap.half::before { content: '★'; color: #e6a817;
+    background: linear-gradient(to right, #e6a817 50%, var(--line) 50%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .star-input .star-wrap.full::before { content: '★'; color: #e6a817; -webkit-text-fill-color: #e6a817; }
 
   /* ── Settings page ── */
   .settings-section { background: var(--card-bg); border: 1px solid var(--line); border-radius: 10px; padding: 24px; margin-bottom: 20px; }
@@ -613,7 +606,7 @@
     <div class="form-group"><label class="form-label">Member</label><select class="form-select" id="rating-member"></select></div>
     <div class="form-group"><label class="form-label">Rating</label>
       <div class="star-input" id="star-input">
-        <div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="0.5"></span><span class="star-full" data-val="1"></span><span class="half-left"  onclick="setStar(0.5)"></span><span class="half-right" onclick="setStar(1)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="1.5"></span><span class="star-full" data-val="2"></span><span class="half-left"  onclick="setStar(1.5)"></span><span class="half-right" onclick="setStar(2)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="2.5"></span><span class="star-full" data-val="3"></span><span class="half-left"  onclick="setStar(2.5)"></span><span class="half-right" onclick="setStar(3)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="3.5"></span><span class="star-full" data-val="4"></span><span class="half-left"  onclick="setStar(3.5)"></span><span class="half-right" onclick="setStar(4)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="4.5"></span><span class="star-full" data-val="5"></span><span class="half-left"  onclick="setStar(4.5)"></span><span class="half-right" onclick="setStar(5)"></span></div>
+        <div class="star-wrap" data-i="1"></div><div class="star-wrap" data-i="2"></div><div class="star-wrap" data-i="3"></div><div class="star-wrap" data-i="4"></div><div class="star-wrap" data-i="5"></div>
       </div>
     </div>
     <div class="form-group"><label class="form-label">Note (optional)</label><input class="form-input" id="rating-note" placeholder="e.g. Beautifully written…"></div>
@@ -631,7 +624,7 @@
     <div class="form-group"><label class="form-label">Member</label><div id="edit-rating-member-name" style="font-weight:500;padding:8px 0;"></div></div>
     <div class="form-group"><label class="form-label">Rating</label>
       <div class="star-input" id="edit-star-input">
-        <div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="0.5"></span><span class="star-full" data-val="1"></span><span class="half-left"  onclick="setEditStar(0.5)"></span><span class="half-right" onclick="setEditStar(1)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="1.5"></span><span class="star-full" data-val="2"></span><span class="half-left"  onclick="setEditStar(1.5)"></span><span class="half-right" onclick="setEditStar(2)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="2.5"></span><span class="star-full" data-val="3"></span><span class="half-left"  onclick="setEditStar(2.5)"></span><span class="half-right" onclick="setEditStar(3)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="3.5"></span><span class="star-full" data-val="4"></span><span class="half-left"  onclick="setEditStar(3.5)"></span><span class="half-right" onclick="setEditStar(4)"></span></div><div class="star-wrap"><span class="star-base">★</span><span class="star-half" data-val="4.5"></span><span class="star-full" data-val="5"></span><span class="half-left"  onclick="setEditStar(4.5)"></span><span class="half-right" onclick="setEditStar(5)"></span></div>
+        <div class="star-wrap" data-i="1"></div><div class="star-wrap" data-i="2"></div><div class="star-wrap" data-i="3"></div><div class="star-wrap" data-i="4"></div><div class="star-wrap" data-i="5"></div>
       </div>
     </div>
     <div class="form-group"><label class="form-label">Note (optional)</label><input class="form-input" id="edit-rating-note"></div>
@@ -876,7 +869,7 @@ window.navigate = page => {
 
 // ── Modals ───────────────────────────────────────────────────
 window.openModal = (name, bookId) => {
-  if (name==='add-rating') { state.currentRatingBookId=bookId; state.currentStar=0; renderMemberSelect(); updateStars('star-input', 0); }
+  if (name==='add-rating') { state.currentRatingBookId=bookId; state.currentStar=0; renderMemberSelect(); updateStars('star-input', 0); initStarInput('star-input', n => { if(n!==null) state.currentStar=n; return state.currentStar; }); }
   if (name==='add-book') populateAssigneeSelect('new-book-assignee', null);
   document.getElementById('modal-'+name).classList.add('open');
 };
@@ -1402,6 +1395,10 @@ onSnapshot(query(collection(db,'members'),orderBy('createdAt')), snap=>{ state.m
 onSnapshot(query(collection(db,'books'),  orderBy('createdAt')), snap=>{ state.books  =snap.docs.map(d=>({id:d.id,...d.data()})); ready>=3?rerender():onReady(); });
 onSnapshot(query(collection(db,'ratings'),orderBy('createdAt')), snap=>{ state.ratings=snap.docs.map(d=>({id:d.id,...d.data()})); ready>=3?rerender():onReady(); });
 
+// Init star inputs once DOM is ready
+initStarInput('star-input',      n => { if(n!==null) state.currentStar=n; return state.currentStar; });
+initStarInput('edit-star-input', n => { if(n!==null) state.currentEditStar=n; return state.currentEditStar; });
+
 // ── Books CRUD ────────────────────────────────────────────────
 window.addBook = async () => {
   const title = document.getElementById('new-book-title').value.trim();
@@ -1537,19 +1534,81 @@ function renderMemberSelect() {
     : '<option disabled>All members have rated</option>';
 }
 
-window.setStar = n => { state.currentStar=n; updateStars('star-input', n); };
-function updateStars(inputId, n) {
-  const wrap = document.getElementById(inputId);
-  if (!wrap) return;
-  wrap.querySelectorAll('.star-full').forEach(el => {
-    el.classList.toggle('lit', parseFloat(el.dataset.val) <= n);
+// ── Half-star rating ─────────────────────────────────────────
+// Each .star-wrap listens for click. offsetX < 50% of element width = half star.
+function initStarInput(inputId, onSelect) {
+  const container = document.getElementById(inputId);
+  if (!container) return;
+
+  function getVal(wrap, event) {
+    const rect = wrap.getBoundingClientRect();
+    const x = (event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
+    const half = x < rect.width / 2;
+    const i = parseInt(wrap.dataset.i);
+    return half ? i - 0.5 : i;
+  }
+
+  function paintStars(n) {
+    container.querySelectorAll('.star-wrap').forEach(w => {
+      const i = parseInt(w.dataset.i);
+      w.classList.remove('full','half');
+      if (n >= i) w.classList.add('full');
+      else if (n >= i - 0.5) w.classList.add('half');
+    });
+  }
+
+  // Hover preview
+  container.addEventListener('mousemove', e => {
+    const wrap = e.target.closest('.star-wrap');
+    if (!wrap) return;
+    paintStars(getVal(wrap, e));
   });
-  wrap.querySelectorAll('.star-half').forEach(el => {
-    const v = parseFloat(el.dataset.val);
-    // show half only when the value is exactly x.5 and n == x.5
-    el.classList.toggle('lit', n === v && !Number.isInteger(n));
+  container.addEventListener('mouseleave', () => {
+    const cur = onSelect(null); // pass null = just repaint current value
+    paintStars(cur);
+  });
+
+  // Click / tap
+  container.addEventListener('click', e => {
+    const wrap = e.target.closest('.star-wrap');
+    if (!wrap) return;
+    const val = getVal(wrap, e);
+    onSelect(val);
+    paintStars(val);
+  });
+  container.addEventListener('touchend', e => {
+    e.preventDefault();
+    const wrap = e.target.closest('.star-wrap');
+    if (!wrap) return;
+    const val = getVal(wrap, e.changedTouches ? {clientX: e.changedTouches[0].clientX} : e);
+    onSelect(val);
+    paintStars(val);
+  });
+
+  return paintStars;
+}
+
+function updateStars(inputId, n) {
+  const container = document.getElementById(inputId);
+  if (!container) return;
+  container.querySelectorAll('.star-wrap').forEach(w => {
+    const i = parseInt(w.dataset.i);
+    w.classList.remove('full','half');
+    if (n >= i) w.classList.add('full');
+    else if (n >= i - 0.5) w.classList.add('half');
   });
 }
+
+let _paintAdd = null, _paintEdit = null;
+
+window.setStar = n => {
+  if (n !== null) state.currentStar = n;
+  return state.currentStar;
+};
+window.setEditStar = n => {
+  if (n !== null) state.currentEditStar = n;
+  return state.currentEditStar;
+};
 
 window.addRating = async () => {
   if (!state.currentStar) return toast('Please select a star rating');
@@ -1571,7 +1630,6 @@ window.openEditRating = id => {
   document.getElementById('modal-edit-rating').classList.add('open');
 };
 
-window.setEditStar = n => { state.currentEditStar=n; updateStars('edit-star-input', n); };
 function updateEditStars(n) { updateStars('edit-star-input', n); }
 
 window.saveEditRating = async () => {
